@@ -17,7 +17,7 @@ const COL_IDLE     = 3;
 const TEXT_SYSPEEK = 'SysPeek';
 const TEXT_SYSMON  = 'System Monitor...';
 const TEXT_CPU     = 'CPU: ';
-const TEXT_LOGID   = 'syspeek-gs: ';
+const TEXT_LOGID   = 'syspeek-gs';
 
 let syspeek;
 let enabled = false;
