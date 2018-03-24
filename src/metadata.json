@@ -1,0 +1,7 @@
+{
+    "name": "SysPeek-GS",
+    "version": "0.1",
+    "description": "Simple CPU load monitor widget",
+    "uuid": "syspeek-gs@gs.eros2.info",
+    "shell-version": ["3.24.0"]
+}
