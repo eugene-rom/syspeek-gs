@@ -6,6 +6,8 @@ const Mainloop = imports.mainloop;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 
+const ICON_SIZE = 28;
+
 let button, index;
 let icons = [];
 let enabled = false;
@@ -17,7 +19,7 @@ let statFile;
 
 function convertString(line) {
     var a = line.split(' ');
-    a = a.filter( function(n) { return n !== ''; } ); 
+    a = a.filter( function(n) { return n !== ''; } );
     a.shift();
     a.splice(7, 3);
     return a.map(Number);
@@ -26,7 +28,6 @@ function convertString(line) {
 const IDLE = 3;
 let last_total = 0;
 let last_busy = 0;
-
 
 function read_line(dis, result)
 {
@@ -41,15 +42,15 @@ function read_line(dis, result)
     var stats = convertString( line );
     var total = stats.reduce( (a, b) => a + b, 0 );
     var busy = total - stats[IDLE];
-   
+
     var delta_total = total - last_total;
     var delta_busy = busy - last_busy;
-    
+
     var percentage = 0;
     if ( ( delta_total > 0 ) && ( delta_busy > 0 ) ) {
         percentage = (delta_busy / delta_total) * 100;
     }
-    
+
     update(percentage);
 
     last_total = total;
@@ -69,29 +70,29 @@ function update( percentage ) {
     button.set_child( icons[ Math.trunc(percentage / 10) ] );
 }
 
-function init() 
+function init()
 {
     statFile = Gio.File.new_for_path('/proc/stat');
-    
+
     button = new St.Bin({ style_class: 'panel-button',
                           reactive: true,
                           can_focus: true,
                           x_fill: true,
                           y_fill: false,
                           track_hover: true });
-    
+
     for ( let i = 0; i <= 100; i += 10 ) {
         let icon = new St.Icon( { icon_name: 'syspeek-' + i + '-symbolic',
-                                  icon_size: 28 } );
+                                  icon_size: ICON_SIZE } );
         //button.set_child(icon);
         icons.push(icon);
     }
-    
+
     button.set_child(icons[0]);
     //button.connect('button-press-event', onClick);
 }
 
-function enable() 
+function enable()
 {
     index = 0;
     last_total = 0;
@@ -101,7 +102,7 @@ function enable()
     Main.panel._rightBox.insert_child_at_index(button, 0);
 
     Mainloop.timeout_add_seconds( 1, function() {
-        read_stat();            
+        read_stat();
         return enabled;
     });
 }
