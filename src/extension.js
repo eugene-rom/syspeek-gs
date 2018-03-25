@@ -10,7 +10,7 @@ const Main = imports.ui.main;
 const Panel = imports.ui.panel;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
-
+const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const ICON_SIZE    = 26;
 const COL_IDLE     = 3;
@@ -33,7 +33,8 @@ class SysPeekGS extends PanelMenu.Button
         this._statFile = Gio.File.new_for_path('/proc/stat');
         this._icons = [];
         for ( let i = 0; i <= 100; i += 10 ) {
-            this._icons.push( new St.Icon( { icon_name: 'syspeek-' + i + '-symbolic',
+            let gicon = Gio.icon_new_for_string( Me.path + '/icons/syspeek-' + i + '.svg' );
+            this._icons.push( new St.Icon( { gicon: gicon,
                                              icon_size: ICON_SIZE } ) );
         }
 
