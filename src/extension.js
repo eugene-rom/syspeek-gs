@@ -1,5 +1,6 @@
 /* global imports */
 
+const Lang = imports.lang;
 const St = imports.gi.St;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
@@ -30,12 +31,13 @@ class SysPeekGS extends PanelMenu.Button
         this._last_total = 0;
         this._last_busy = 0;
 
-        this._statFile = Gio.File.new_for_path('/proc/stat');
+        let statFile = Gio.File.new_for_path('/proc/stat');
+        this._input = Gio.DataInputStream.new( statFile.read(null) );
+
         this._icons = [];
         for ( let i = 0; i <= 100; i += 10 ) {
             let gicon = Gio.icon_new_for_string( Me.path + '/icons/syspeek-' + i + '.svg' );
-            this._icons.push( new St.Icon( { gicon: gicon,
-                                             icon_size: ICON_SIZE } ) );
+            this._icons.push( new St.Icon( { gicon: gicon, icon_size: ICON_SIZE } ) );
         }
 
         this._hbox = new St.BoxLayout( { style_class: 'panel-status-menu-box' } );
@@ -51,11 +53,15 @@ class SysPeekGS extends PanelMenu.Button
         this._micpu = new PopupMenu.PopupMenuItem( TEXT_CPU );
         this.menu.addMenuItem( this._micpu );
 
-        var self = this;
-        Mainloop.timeout_add_seconds( 1, function() {
-            _read_stat(self);
+        Mainloop.timeout_add_seconds( 1, Lang.bind( this, function() {
+            this._read_stat();
             return enabled;
-        });
+        } ));
+    }
+
+    destroy() {
+        this._input.close(null);
+        super.destroy();
     }
 
     _update( percentage )
@@ -69,59 +75,47 @@ class SysPeekGS extends PanelMenu.Button
             this._micpu.label.set_text( TEXT_CPU + percentage.toFixed(1) + '%' );
         }
     }
+
+    _convert_string(line) {
+        var a = line.split(' ');
+        a = a.filter( function(n) { return n !== ''; } );
+        a.shift();
+        a.splice(7, 3);
+        return a.map(Number);
+    }
+
+    _read_stat()
+    {
+        if ( enabled )
+        {
+            this._input.seek( 0, GLib.SeekType.SET, null );
+            var [line, length] = this._input.read_line_utf8(null);
+
+            if (line === null) {
+                return;
+            }
+
+            //global.log( TEXT_LOGID, 'Line: ' + line );
+            var stats = this._convert_string( line );
+            var total = stats.reduce( (a, b) => a + b, 0 );
+            var busy = total - stats[ COL_IDLE ];
+
+            var delta_total = total - this._last_total;
+            var delta_busy = busy - this._last_busy;
+
+            var percentage = 0;
+            if ( ( delta_total > 0 ) && ( delta_busy > 0 ) ) {
+                percentage = (delta_busy / delta_total) * 100;
+            }
+
+            this._update(percentage);
+
+            this._last_total = total;
+            this._last_busy = busy;
+        }
+    }
 };
 
-function _convert_string(line) {
-    var a = line.split(' ');
-    a = a.filter( function(n) { return n !== ''; } );
-    a.shift();
-    a.splice(7, 3);
-    return a.map(Number);
-}
-
-function _read_line(dis, result)
-{
-    if ( enabled )
-    {
-        var [line, length] = dis.read_line_finish_utf8(result);
-        dis.close(null);
-
-        if (line === null) {
-            return;
-        }
-
-        //global.log( TEXT_LOGID, 'Line: ' + line );
-        var stats = _convert_string( line );
-        var total = stats.reduce( (a, b) => a + b, 0 );
-        var busy = total - stats[COL_IDLE];
-
-        var delta_total = total - syspeek._last_total;
-        var delta_busy = busy - syspeek._last_busy;
-
-        var percentage = 0;
-        if ( ( delta_total > 0 ) && ( delta_busy > 0 ) ) {
-            percentage = (delta_busy / delta_total) * 100;
-        }
-
-        syspeek._update(percentage);
-
-        syspeek._last_total = total;
-        syspeek._last_busy = busy;
-    }
-}
-
-function _read_stat(self)
-{
-    if ( enabled )
-    {
-        try {
-            var dis = Gio.DataInputStream.new( self._statFile.read(null) );
-            dis.read_line_async( GLib.PRIORITY_DEFAULT, null, _read_line );
-        } catch (e) {
-            global.log( TEXT_LOGID, 'Error: ' + e.message );
-        }
-    }
-}
 
 function enable() {
     enabled = true;
