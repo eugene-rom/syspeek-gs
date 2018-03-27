@@ -1,6 +1,5 @@
 /* global imports */
 
-const Lang = imports.lang;
 const St = imports.gi.St;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
@@ -53,10 +52,7 @@ class SysPeekGS extends PanelMenu.Button
         this._micpu = new PopupMenu.PopupMenuItem( TEXT_CPU );
         this.menu.addMenuItem( this._micpu );
 
-        Mainloop.timeout_add_seconds( 1, Lang.bind( this, function() {
-            this._read_stat();
-            return enabled;
-        } ));
+        Mainloop.timeout_add_seconds( 1, this._read_stat.bind(this) );
     }
 
     destroy() {
@@ -77,8 +73,8 @@ class SysPeekGS extends PanelMenu.Button
     }
 
     _convert_string(line) {
-        var a = line.split(' ');
-        a = a.filter( function(n) { return n !== ''; } );
+        let a = line.split(' ');
+        a = a.filter( n => { return n !== ''; } );
         a.shift();
         a.splice(7, 3);
         return a.map(Number);
@@ -89,21 +85,21 @@ class SysPeekGS extends PanelMenu.Button
         if ( enabled )
         {
             this._input.seek( 0, GLib.SeekType.SET, null );
-            var [line, length] = this._input.read_line_utf8(null);
+            let [line, length] = this._input.read_line_utf8(null);
 
             if (line === null) {
                 return;
             }
 
             //global.log( TEXT_LOGID, 'Line: ' + line );
-            var stats = this._convert_string( line );
-            var total = stats.reduce( (a, b) => a + b, 0 );
-            var busy = total - stats[ COL_IDLE ];
+            let stats = this._convert_string( line );
+            let total = stats.reduce( (a, b) => a + b, 0 );
+            let busy = total - stats[ COL_IDLE ];
 
-            var delta_total = total - this._last_total;
-            var delta_busy = busy - this._last_busy;
+            let delta_total = total - this._last_total;
+            let delta_busy = busy - this._last_busy;
 
-            var percentage = 0;
+            let percentage = 0;
             if ( ( delta_total > 0 ) && ( delta_busy > 0 ) ) {
                 percentage = (delta_busy / delta_total) * 100;
             }
@@ -113,6 +109,8 @@ class SysPeekGS extends PanelMenu.Button
             this._last_total = total;
             this._last_busy = busy;
         }
+
+        return enabled;
     }
 };
 
