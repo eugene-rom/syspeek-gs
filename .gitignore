@@ -2,4 +2,4 @@
 po/*.mo
 *~
 nbproject/
-src/test.js
+build/
