@@ -1,10 +1,6 @@
 /* global imports */
 
-const St = imports.gi.St;
-const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
-const Mainloop = imports.mainloop;
-const Shell = imports.gi.Shell;
+const { GLib, Gio, GObject, St, Shell } = imports.gi;
 
 const Main = imports.ui.main;
 const Panel = imports.ui.panel;
@@ -24,7 +20,8 @@ let enabled = false;
 
 class SysPeekGS extends PanelMenu.Button
 {
-    constructor() {
+    constructor()
+    {
         super( 0.0, TEXT_SYSPEEK );
 
         this._last_total = 0;
@@ -52,65 +49,63 @@ class SysPeekGS extends PanelMenu.Button
         this._micpu = new PopupMenu.PopupMenuItem( TEXT_CPU );
         this.menu.addMenuItem( this._micpu );
 
-        Mainloop.timeout_add_seconds( 1, this._read_stat.bind(this) );
-    }
+        this.destroy = () => {
+            this._input.close(null);
+            super.destroy();
+        };
 
-    destroy() {
-        this._input.close(null);
-        super.destroy();
-    }
-
-    _update( percentage )
-    {
-        if ( enabled ) {
-            let icon_old = this._hbox.get_child_at_index( 0 );
-            let icon_new = this._icons[ Math.trunc(percentage / 10) ];
-            if ( icon_new !== icon_old ) {
-                this._hbox.replace_child( icon_old, icon_new );
+        this._update = ( percentage ) => {
+            if ( enabled ) {
+                let icon_old = this._hbox.get_child_at_index( 0 );
+                let icon_new = this._icons[ Math.trunc(percentage / 10) ];
+                if ( icon_new !== icon_old ) {
+                    this._hbox.replace_child( icon_old, icon_new );
+                }
+                this._micpu.label.set_text( TEXT_CPU + percentage.toFixed(1) + '%' );
             }
-            this._micpu.label.set_text( TEXT_CPU + percentage.toFixed(1) + '%' );
-        }
-    }
+        };
 
-    _convert_string(line) {
-        let a = line.split(' ');
-        a = a.filter( n => { return n !== ''; } );
-        a.shift();
-        a.splice(7, 3);
-        return a.map(Number);
-    }
+        this._convert_string = ( line ) => {
+            let a = line.split(' ');
+            a = a.filter( n => { return n !== ''; } );
+            a.shift();
+            a.splice(7, 3);
+            return a.map(Number);
+        };
 
-    _read_stat()
-    {
-        if ( enabled )
-        {
-            this._input.seek( 0, GLib.SeekType.SET, null );
-            let [line, length] = this._input.read_line_utf8(null);
+        this._read_stat = () => {
+            if ( enabled )
+            {
+                this._input.seek( 0, GLib.SeekType.SET, null );
+                let [line, length] = this._input.read_line_utf8(null);
 
-            if (line === null) {
-                return;
+                if (line === null) {
+                    return;
+                }
+
+                //global.log( TEXT_LOGID, 'Line: ' + line );
+                let stats = this._convert_string( line );
+                let total = stats.reduce( (a, b) => a + b, 0 );
+                let busy = total - stats[ COL_IDLE ];
+
+                let delta_total = total - this._last_total;
+                let delta_busy = busy - this._last_busy;
+
+                let percentage = 0;
+                if ( ( delta_total > 0 ) && ( delta_busy > 0 ) ) {
+                    percentage = (delta_busy / delta_total) * 100;
+                }
+
+                this._update(percentage);
+
+                this._last_total = total;
+                this._last_busy = busy;
             }
 
-            //global.log( TEXT_LOGID, 'Line: ' + line );
-            let stats = this._convert_string( line );
-            let total = stats.reduce( (a, b) => a + b, 0 );
-            let busy = total - stats[ COL_IDLE ];
+            return enabled;
+        };
 
-            let delta_total = total - this._last_total;
-            let delta_busy = busy - this._last_busy;
-
-            let percentage = 0;
-            if ( ( delta_total > 0 ) && ( delta_busy > 0 ) ) {
-                percentage = (delta_busy / delta_total) * 100;
-            }
-
-            this._update(percentage);
-
-            this._last_total = total;
-            this._last_busy = busy;
-        }
-
-        return enabled;
+        GLib.timeout_add_seconds( GLib.PRIORITY_DEFAULT, 1, this._read_stat.bind(this) );
     }
 };
 
