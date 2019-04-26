@@ -1,6 +1,6 @@
 /* global imports */
 
-const { GLib, Gio, GObject, St, Shell } = imports.gi;
+const { GLib, Gio, St, Shell } = imports.gi;
 
 const Main = imports.ui.main;
 const Panel = imports.ui.panel;
