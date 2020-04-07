@@ -1,6 +1,6 @@
 /* global imports */
 
-const { GLib, Gio, St, Shell } = imports.gi;
+const { GLib, Gio, GObject, St, Shell } = imports.gi;
 
 const Main = imports.ui.main;
 const Panel = imports.ui.panel;
@@ -18,11 +18,12 @@ const TEXT_LOGID   = 'syspeek-gs';
 let syspeek;
 let enabled = false;
 
+let SysPeekGS = GObject.registerClass(
 class SysPeekGS extends PanelMenu.Button
 {
-    constructor()
+    _init()
     {
-        super( 0.0, TEXT_SYSPEEK );
+        super._init( 0.0, TEXT_SYSPEEK );
 
         this._last_total = 0;
         this._last_busy = 0;
@@ -38,7 +39,7 @@ class SysPeekGS extends PanelMenu.Button
 
         this._hbox = new St.BoxLayout( { style_class: 'panel-status-menu-box' } );
         this._hbox.insert_child_at_index( this._icons[0], 0 );
-        this.actor.add_child(this._hbox);
+        this.add_child(this._hbox);
 
         this.menu.addAction( TEXT_SYSMON, event => {
             let appSystem = Shell.AppSystem.get_default();
@@ -107,7 +108,7 @@ class SysPeekGS extends PanelMenu.Button
 
         GLib.timeout_add_seconds( GLib.PRIORITY_DEFAULT, 1, this._read_stat.bind(this) );
     }
-};
+} );
 
 
 function enable() {
