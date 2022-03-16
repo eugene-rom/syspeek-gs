@@ -17,6 +17,7 @@ const TEXT_LOGID   = 'syspeek-gs';
 
 let syspeek;
 let enabled = false;
+let sourceId = null;
 
 let SysPeekGS = GObject.registerClass(
 class SysPeekGS extends PanelMenu.Button
@@ -106,7 +107,7 @@ class SysPeekGS extends PanelMenu.Button
             return enabled;
         };
 
-        GLib.timeout_add_seconds( GLib.PRIORITY_DEFAULT, 1, this._read_stat.bind(this) );
+        sourceId = GLib.timeout_add_seconds( GLib.PRIORITY_DEFAULT, 1, this._read_stat.bind(this) );
     }
 } );
 
@@ -117,7 +118,15 @@ function enable() {
     Main.panel.addToStatusArea( TEXT_SYSPEEK, syspeek );
 }
 
-function disable() {
+function disable()
+{
     enabled = false;
+ 
+    if ( sourceId ) {
+        GLib.Source.remove( sourceId );
+        sourceId = null;
+    }
+
     syspeek.destroy();
+    syspeek = null;
 }
