@@ -1,6 +1,6 @@
 {
     "name": "SysPeek-GS",
-    "version": 9,
+    "version": 10,
     "description": "Minimalistic CPU load monitor widget inspired by SysPeek indicator",
     "url": "https://github.com/eugene-rom/syspeek-gs",
     "uuid": "syspeek-gs@gs.eros2.info",
