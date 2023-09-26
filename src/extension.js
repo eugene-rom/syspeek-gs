@@ -6,7 +6,6 @@ import GObject from 'gi://GObject'
 import St from 'gi://St'
 import Shell from 'gi://Shell'
 
-
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as Panel from 'resource:///org/gnome/shell/ui/panel.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
@@ -20,7 +19,6 @@ const TEXT_SYSMON  = 'System Monitor...';
 const TEXT_CPU     = 'CPU: ';
 const TEXT_LOGID   = 'syspeek-gs';
 
-let enabled = false;
 let sourceId = null;
 
 class SysPeekGSBtn extends PanelMenu.Button
@@ -68,14 +66,12 @@ class SysPeekGSBtn extends PanelMenu.Button
 
     _update( percentage ) 
     {
-        if ( enabled ) {
-            let icon_old = this._hbox.get_child_at_index( 0 );
-            let icon_new = this._icons[ Math.trunc(percentage / 10) ];
-            if ( icon_new !== icon_old ) {
-                this._hbox.replace_child( icon_old, icon_new );
-            }
-            this._micpu.label.set_text( TEXT_CPU + percentage.toFixed(1) + '%' );
+        let icon_old = this._hbox.get_child_at_index( 0 );
+        let icon_new = this._icons[ Math.trunc(percentage / 10) ];
+        if ( icon_new !== icon_old ) {
+            this._hbox.replace_child( icon_old, icon_new );
         }
+        this._micpu.label.set_text( TEXT_CPU + percentage.toFixed(1) + '%' );
     }
 
     _convert_string( line )
@@ -89,50 +85,44 @@ class SysPeekGSBtn extends PanelMenu.Button
 
     _read_stat()
     {
-        if ( enabled )
-        {
-            this._input.seek( 0, GLib.SeekType.SET, null );
-            let [line, length] = this._input.read_line_utf8(null);
+        this._input.seek( 0, GLib.SeekType.SET, null );
+        let [line, length] = this._input.read_line_utf8(null);
 
-            if (line === null) {
-                return;
-            }
-
-            //global.log( TEXT_LOGID, 'Line: ' + line );
-            let stats = this._convert_string( line );
-            let total = stats.reduce( (a, b) => a + b, 0 );
-            let busy = total - stats[ COL_IDLE ];
-
-            let delta_total = total - this._last_total;
-            let delta_busy = busy - this._last_busy;
-
-            let percentage = 0;
-            if ( ( delta_total > 0 ) && ( delta_busy > 0 ) ) {
-                percentage = (delta_busy / delta_total) * 100;
-            }
-
-            this._update(percentage);
-
-            this._last_total = total;
-            this._last_busy = busy;
+        if (line === null) {
+            return;
         }
 
-        return enabled;
+        //global.log( TEXT_LOGID, 'Line: ' + line );
+        let stats = this._convert_string( line );
+        let total = stats.reduce( (a, b) => a + b, 0 );
+        let busy = total - stats[ COL_IDLE ];
+
+        let delta_total = total - this._last_total;
+        let delta_busy = busy - this._last_busy;
+
+        let percentage = 0;
+        if ( ( delta_total > 0 ) && ( delta_busy > 0 ) ) {
+            percentage = (delta_busy / delta_total) * 100;
+        }
+
+        this._update(percentage);
+
+        this._last_total = total;
+        this._last_busy = busy;
+
+        return true;
     }
 }
 
 export default class SysPeekGS extends Extension 
 {
     enable() {
-        enabled = true;
         this._syspeek = new SysPeekGSBtn( this.path );
         Main.panel.addToStatusArea( TEXT_SYSPEEK, this._syspeek );
     }
 
     disable() 
     {
-        enabled = false;
-
         if ( sourceId ) {
             GLib.Source.remove( sourceId );
             sourceId = null;
