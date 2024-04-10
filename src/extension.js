@@ -64,7 +64,7 @@ class SysPeekGSBtn extends PanelMenu.Button
         super.destroy();
     }
 
-    _update( percentage ) 
+    _update( percentage )
     {
         let icon_old = this._hbox.get_child_at_index( 0 );
         let icon_new = this._icons[ Math.trunc(percentage / 10) ];
@@ -114,14 +114,14 @@ class SysPeekGSBtn extends PanelMenu.Button
     }
 }
 
-export default class SysPeekGS extends Extension 
+export default class SysPeekGS extends Extension
 {
     enable() {
         this._syspeek = new SysPeekGSBtn( this.path );
         Main.panel.addToStatusArea( TEXT_SYSPEEK, this._syspeek );
     }
 
-    disable() 
+    disable()
     {
         if ( sourceId ) {
             GLib.Source.remove( sourceId );
