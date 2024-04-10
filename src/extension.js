@@ -50,7 +50,10 @@ class SysPeekGSBtn extends PanelMenu.Button
         this.menu.addAction( TEXT_SYSMON, event => {
             let appSystem = Shell.AppSystem.get_default();
             let app = appSystem.lookup_app('gnome-system-monitor.desktop');
-            app.activate_full(-1, event.get_time());
+            app = app || appSystem.lookup_app('org.gnome.SystemMonitor.desktop');
+            if ( app !== null ) {
+                app.activate_full(-1, event.get_time());
+            }
         });
 
         this._micpu = new PopupMenu.PopupMenuItem( TEXT_CPU );
