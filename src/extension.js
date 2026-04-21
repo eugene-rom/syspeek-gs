@@ -15,7 +15,6 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 const ICON_SIZE    = 26;
 const COL_IDLE     = 3;
 const TEXT_SYSPEEK = 'SysPeek';
-const TEXT_SYSMON  = 'System Monitor...';
 const TEXT_CPU     = 'CPU: ';
 const TEXT_LOGID   = 'syspeek-gs';
 
@@ -24,7 +23,7 @@ let sourceId = null;
 class SysPeekGSBtn extends PanelMenu.Button
 {
     static {
-        GObject.registerClass(this);
+        GObject.registerClass( this );
     }
 
     constructor( path )
@@ -47,14 +46,12 @@ class SysPeekGSBtn extends PanelMenu.Button
         this._hbox.insert_child_at_index( this._icons[0], 0 );
         this.add_child(this._hbox);
 
-        this.menu.addAction( TEXT_SYSMON, event => {
-            let appSystem = Shell.AppSystem.get_default();
-            let app = appSystem.lookup_app('gnome-system-monitor.desktop');
-            app = app || appSystem.lookup_app('org.gnome.SystemMonitor.desktop');
-            if ( app !== null ) {
-                app.activate_full(-1, event.get_time());
-            }
-        });
+        this._sysmon_app = this._get_sysmon_app();
+        if ( this._sysmon_app !== null ) {
+            this.menu.addAction( this._sysmon_app.get_name() + '...', event => {
+                this._sysmon_app.activate_full( -1, event.get_time() );
+            } );
+        }
 
         this._micpu = new PopupMenu.PopupMenuItem( TEXT_CPU );
         this.menu.addMenuItem( this._micpu );
@@ -114,6 +111,18 @@ class SysPeekGSBtn extends PanelMenu.Button
         this._last_busy = busy;
 
         return true;
+    }
+
+    _get_sysmon_app()
+    {
+        let appSystem = Shell.AppSystem.get_default();
+        // old GNOME System Monitor desktop file name
+        let app = appSystem.lookup_app( 'gnome-system-monitor.desktop' );
+        // new name
+        app = app || appSystem.lookup_app( 'org.gnome.SystemMonitor.desktop' );
+        // "Resources" is default system monitor in Ubuntu since 26.04
+        app = app || appSystem.lookup_app( 'net.nokyan.Resources.desktop' );
+        return app;
     }
 }
 
