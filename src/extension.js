@@ -122,6 +122,8 @@ class SysPeekGSBtn extends PanelMenu.Button
         app = app || appSystem.lookup_app( 'org.gnome.SystemMonitor.desktop' );
         // "Resources" is default system monitor in Ubuntu since 26.04
         app = app || appSystem.lookup_app( 'net.nokyan.Resources.desktop' );
+        // "Resources" is GNOME app now (Ubuntu 26.10)
+        app = app || appSystem.lookup_app( 'org.gnome.Resources.desktop' );
         return app;
     }
 }
